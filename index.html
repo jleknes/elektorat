@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<!--<script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.9/require.min.js"></script>-->
+	<title>Lek med Leaflet</title>
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css"/>
+	<link rel="stylesheet" href="strategicmap.css"/>
+	<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+	<script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+	
+</head>
+<body>
+	<div id="map"></div>
+	<script type="text/javascript">
+
+	var map = L.map('map').setView([63.5, 10], 7);
+	var fylke = '16';
+	var party = 'SV';
+	var kommunegrenser;
+	var valgresultat;
+
+
+
+
+
+	$.getJSON("valgresultat_2013_kommuner.json").done(function(json) {
+		valgresultat=json;
+	});
+	
+	function getElectionData(kommuneId) {
+		for (i=0; i<valgresultat.length;i++) {
+			if (valgresultat[i].KommuneID===kommuneId && valgresultat[i].Parti===party) return valgresultat[i];
+		}
+		return null; 
+	}
+
+	$.getJSON("kommuner.geojson").done(function(json) {
+		kommunegrenser = json;
+
+		L.geoJson(kommunegrenser, {
+			style:style,
+			filter: function(featureData) {
+				var featureFylke = featureData.properties.KOMM.toString().substring(0,2);
+				return featureFylke === fylke;
+			}
+		}).addTo(map);
+	});
+
+	function style(feature) {
+		var oppslutning = getElectionData(feature.properties.KOMM);
+		return {
+			fillColor: getColor(oppslutning.ProsentAndel),
+			weight: 2,
+			opacity: 1,
+			color: 'white',
+			dashArray: '3',
+			fillOpacity: 0.7
+		};
+	}
+
+	function getColor(p) {
+		return p > 1000 ? '#800026' :
+		p > 500  ? '#BD0026' :
+		p > 200  ? '#E31A1C' :
+		p > 100  ? '#FC4E2A' :
+		p > 50   ? '#FD8D3C' :
+		p > 20   ? '#FEB24C' :
+		p > 10   ? '#FED976' :
+		'#FFEDA0';
+	}	
+
+	</script>
+</body>
+</html>
