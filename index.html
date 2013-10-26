@@ -18,27 +18,36 @@
 	var party = 'SV';
 	var kommunegrenser;
 	var valgresultat;
-
-
+	var kommuneLayer;
 
 
 
 	$.getJSON("valgresultat_2013_kommuner.json").done(function(json) {
 		valgresultat=json;
+		kommuneLayer.setStyle(style);
+		info.addTo(map);
+
+	}).fail(function() {
+		console.log("feil under lasting av valgresultat");
 	});
-	
+
 	function getElectionData(kommuneId) {
+		if (valgresultat == undefined) {
+			console.log("called to early");
+			return 0.0;
+		}
 		for (i=0; i<valgresultat.length;i++) {
 			if (valgresultat[i].KommuneID===kommuneId && valgresultat[i].Parti===party) return valgresultat[i];
 		}
-		return null; 
+		return 0.0;
 	}
 
 	$.getJSON("kommuner.geojson").done(function(json) {
 		kommunegrenser = json;
 
-		L.geoJson(kommunegrenser, {
+		kommuneLayer = L.geoJson(kommunegrenser, {
 			style:style,
+			onEachFeature:onEachFeature,
 			filter: function(featureData) {
 				var featureFylke = featureData.properties.KOMM.toString().substring(0,2);
 				return featureFylke === fylke;
@@ -48,6 +57,7 @@
 
 	function style(feature) {
 		var oppslutning = getElectionData(feature.properties.KOMM);
+		//console.log(feature.properties.KOMM+" "+oppslutning);
 		return {
 			fillColor: getColor(oppslutning.ProsentAndel),
 			weight: 2,
@@ -59,16 +69,70 @@
 	}
 
 	function getColor(p) {
-		return p > 1000 ? '#800026' :
-		p > 500  ? '#BD0026' :
-		p > 200  ? '#E31A1C' :
-		p > 100  ? '#FC4E2A' :
-		p > 50   ? '#FD8D3C' :
-		p > 20   ? '#FEB24C' :
-		p > 10   ? '#FED976' :
-		'#FFEDA0';
-	}	
+		return p > 8.0 ? '#CC0000' :
+		p > 6.5  ? '#FF0000' :
+		p > 5.0  ? '#FF3333' :
+		p > 4.0  ? '#FF6666' :
+		p > 2.5   ? '#FF9999' :
+		p > 1.0   ? '#FECCCC' :
+		p > 0   ? '	#FFE6E6' :
+		'#000000';
+	}
 
-	</script>
+	function zoomTilKommune(e) {
+		map.fitBounds(e.target.getBounds());
+	}
+	function onEachFeature(feature, layer) {
+		layer.on({
+			mouseover: highlightFeature,
+			mouseout: resetHighlight,
+			click: zoomTilKommune
+		});
+	}
+	function highlightFeature(e) {
+		info.update(layer.feature.properties);
+	}
+
+	function resetHighlight(e) {
+		info.update();
+	}
+
+	var info = L.control();
+
+	info.onAdd = function (map) {
+    	this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+	    this.update();
+	    return this._div;
+	};
+
+	// method that we will use to update the control based on feature properties passed
+	info.update = function (props) {
+		var electionData = getElectionData(props.KOMM);
+		this._div.innerHTML = 'Oppslutning' +  (electionData ?
+		'<b>' + electionData.ProsentAndel + '</b><br /> Navn:' + props.NAVN + ' people / mi<sup>2</sup>'
+		: 'Hover over a state');
+	};
+
+	var legend = L.control({position: 'bottomright'});
+
+	legend.onAdd = function (map) {
+
+	var div = L.DomUtil.create('div', 'info legend'),
+	grades = [0, 1.0, 2.5, 4.0, 5.0, 6.5, 8.0],
+	labels = [];
+
+    // loop through our density intervals and generate a label with a colored square for each interval
+    for (var i = 0; i < grades.length; i++) {
+    	div.innerHTML +=
+    	'<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+    	grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+    }
+
+    return div;
+};		
+legend.addTo(map);
+
+
+</script>
 </body>
 </html>
