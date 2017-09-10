@@ -8,7 +8,7 @@ const opptalt = "";
 const oppslutning = [];
 
 
-const map = L.map('map', {
+const map = L.map('mapid', {
     center: [63.5, 10],
     zoom: 7
 });
