@@ -1,0 +1,24 @@
+{
+  "name": "sv-kart",
+  "version": "1.0.0",
+  "description": "Kart over SVs valgoppslutning",
+  "main": "index.js",
+  "dependencies": {
+    "geojson-precision": "^0.4.0",
+    "node-static": "^0.7.9"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jleknes/sv-kart.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jleknes/sv-kart/issues"
+  },
+  "homepage": "https://github.com/jleknes/sv-kart#readme"
+}
